@@ -1,52 +1,17 @@
 #!/bin/bash
 
-Cyan='\033[0;36m'
-Default='\033[0;m'
+VersionString=`grep -E 's.version.*=' middleware.podspec`
+VersionNumber=`tr -cd 0-9 <<<"$VersionString"`
 
-version=""
-repoName=""
-confirmed="n"
+NewVersionNumber=$(($VersionNumber + 1))
+LineNumber=`grep -nE 's.version.*=' middleware.podspec | cut -d : -f1`
+sed -i "" "${LineNumber}s/${VersionNumber}/${NewVersionNumber}/g" middleware.podspec
 
-getVersion() {
-    read -p "请输入版本号: " version
-
-    if test -z "$version"; then
-        getVersion
-    fi
-}
-
-getRepoName() {
-    read -p "请输入仓库名: " repoName
-
-    if test -z "$repoName"; then
-        getRepoName
-    fi
-}
-
-getInfomation() {
-getVersion
-getRepoName
-
-echo -e "\n${Default}================================================"
-echo -e "  Version  :  ${Cyan}${version}${Default}"
-echo -e "  RepoName :  ${Cyan}${repoName}${Default}"
-echo -e "================================================\n"
-}
-
-echo -e "\n"
-while [ "$confirmed" != "y" -a "$confirmed" != "Y" ]
-do
-if [ "$confirmed" == "n" -o "$confirmed" == "N" ]; then
-getInfomation
-fi
-read -p "确定? (y/n):" confirmed
-done
+echo "current version is ${VersionNumber}, new version is ${NewVersionNumber}"
 
 git add .
-git commit -m "update to repo"
-git tag $version
-git push
-git push --tags
-pod repo push $repoName --allow-warnings --use-libraries
-say "finished"
-echo "finished"
+git commit -am ${NewVersionNumber}
+git tag ${NewVersionNumber}
+git push origin master --tags
+pod repo push 私有库的名字(应该可以多个) middleware.podspec --verbose --allow-warnings --use-libraries 
+
